@@ -722,8 +722,9 @@ body.searched .results { display: block; }
   font-size: var(--step--1);
   color: var(--phos-dim);
   text-shadow: none;
-  max-width: 30rem;
+  max-width: 36rem;
   line-height: 1.8;
+  text-wrap: pretty;   /* 한 단어만 다음 줄로 밀려나는 것을 막는다 */
 }
 .support-note b { color: var(--phos); }
 
@@ -910,13 +911,13 @@ a.byline:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
            alt="카카오페이 송금 QR 코드 (받는 사람: oieh)" width="1080" height="1301">
 
       <p class="support-note">
-        카카오톡으로 QR을 찍으면 <b>카카오페이 송금</b> 창이 열립니다.
+        카카오톡으로 QR을 찍으면 <b>카카오페이 송금</b> 창이 열립니다.<br>
         받는 사람은 <b>oieh</b>입니다.
       </p>
 
       <p class="support-note">
-        보내주신 후원은 <b>데이터 최신화 유지</b>와 <b>검색 정확도 향상</b>,
-        그리고 <b>서버 유지</b>로 쓰입니다.
+        보내주신 후원은 <b>데이터 최신화 유지</b>와 <b>검색 정확도 향상</b>,<br>
+        그리고 <b>서버 유지</b>로 쓰입니다.<br>
         후원하지 않으셔도 모든 기능을 그대로 쓰실 수 있습니다.
       </p>
     </div>
