@@ -704,6 +704,40 @@ body.searched .results { display: block; }
 .readout-col .extlink:hover { color: var(--phos); text-decoration: underline; background: none; }
 .readout-col .extlink:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
+/* 갤러리 링크와 같은 모양으로 둔다 (button 기본 스타일만 걷어냄) */
+.supportbtn { cursor: pointer; background: none; text-align: left; }
+
+/* ── 후원 모달 ── */
+.support-body { display: grid; gap: 1.1rem; justify-items: center; text-align: center; }
+
+.support-qr {
+  width: min(300px, 72vw);
+  height: auto;            /* 없으면 HTML height 속성 때문에 세로로 늘어난다 */
+  border: 1px solid var(--phos-dim);
+  background: #F2F5F7;     /* QR 은 대비가 있어야 스캔된다 */
+}
+
+.support-note {
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  color: var(--phos-dim);
+  text-shadow: none;
+  max-width: 30rem;
+  line-height: 1.8;
+}
+.support-note b { color: var(--phos); }
+
+.support-tithe {
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  padding: .35rem .9rem;
+  text-shadow: 0 0 6px var(--amber);
+}
+
 /* ── 푸터 ── */
 .footer {
   position: relative;
@@ -829,6 +863,7 @@ a.byline:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
     <dl><dt>Origin</dt><dd>Warhammer 40k Wiki</dd></dl>
     <a class="extlink" href="https://gall.dcinside.com/mgallery/board/lists/?id=blacklibrary"
        target="_blank" rel="noopener">블랙 라이브러리 갤러리</a>
+    <button class="extlink supportbtn" id="supportbtn" type="button" aria-haspopup="dialog">SUPPORT</button>
   </div>
   <dl><dt>Records</dt><dd id="recCount">7,299</dd></dl>
   <dl><dt>Clearance</dt><dd class="hot">Vermilion</dd></dl>
@@ -860,6 +895,33 @@ a.byline:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
     </dl>
 
     <button class="modal-close" id="modalClose" type="button">닫기</button>
+  </div>
+</div>
+
+<div class="overlay" id="supportOverlay" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+  <div class="modal" id="supportModal" tabindex="-1">
+    <h2 id="supportTitle">후원하기</h2>
+    <p class="lede">이 아카이브는 광고도, 결제 창도 없이 운영됩니다.</p>
+
+    <div class="support-body">
+      <span class="support-tithe">╪ 십일조 봉납 ╪</span>
+
+      <img class="support-qr" src="support-qr.png"
+           alt="카카오페이 송금 QR 코드 (받는 사람: oieh)" width="1080" height="1301">
+
+      <p class="support-note">
+        카카오톡으로 QR을 찍으면 <b>카카오페이 송금</b> 창이 열립니다.
+        받는 사람은 <b>oieh</b>입니다.
+      </p>
+
+      <p class="support-note">
+        보내주신 후원은 <b>로어 데이터를 최신으로 유지</b>하고
+        <b>검색 정확도를 다듬는 데</b> 쓰입니다.
+        후원하지 않으셔도 모든 기능을 그대로 쓰실 수 있습니다.
+      </p>
+    </div>
+
+    <button class="modal-close" id="supportClose" type="button">닫기</button>
   </div>
 </div>
 
@@ -1361,27 +1423,34 @@ function stopBootLog() {
   if (bootTimer) { bootTimer(); bootTimer = null; }
 }
 
-/* ── 사용법 모달 ── */
-const overlay = document.getElementById('overlay');
-const helpbtn = document.getElementById('helpbtn');
+/* ── 모달 (사용법 / 후원) ── */
 let lastFocus = null;
 
-function openHelp() {
+function openModal(overlayEl, panelEl) {
   lastFocus = document.activeElement;
-  overlay.setAttribute('open', '');
-  overlay.scrollTop = 0;
+  overlayEl.setAttribute('open', '');
+  overlayEl.scrollTop = 0;
   // 닫기 버튼에 포커스를 주면 브라우저가 거기로 스크롤해 제목이 잘린다.
-  document.getElementById('modal').focus({ preventScroll: true });
+  panelEl.focus({ preventScroll: true });
 }
-function closeHelp() {
-  overlay.removeAttribute('open');
+
+function closeModal(overlayEl) {
+  overlayEl.removeAttribute('open');
   lastFocus?.focus();
 }
 
-helpbtn.addEventListener('click', openHelp);
-document.getElementById('modalClose').addEventListener('click', closeHelp);
-overlay.addEventListener('click', (e) => { if (e.target === overlay) closeHelp(); });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && overlay.hasAttribute('open')) closeHelp();
-});
+function wireModal(overlayId, panelId, openBtnId, closeBtnId) {
+  const overlayEl = document.getElementById(overlayId);
+  const panelEl = document.getElementById(panelId);
+
+  document.getElementById(openBtnId).addEventListener('click', () => openModal(overlayEl, panelEl));
+  document.getElementById(closeBtnId).addEventListener('click', () => closeModal(overlayEl));
+  overlayEl.addEventListener('click', (e) => { if (e.target === overlayEl) closeModal(overlayEl); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlayEl.hasAttribute('open')) closeModal(overlayEl);
+  });
+}
+
+wireModal('overlay', 'modal', 'helpbtn', 'modalClose');
+wireModal('supportOverlay', 'supportModal', 'supportbtn', 'supportClose');
 </script>
