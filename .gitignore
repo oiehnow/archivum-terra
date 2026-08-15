@@ -1,0 +1,33 @@
+# --- 시크릿: 절대 커밋 금지 ---
+.env
+.env.*
+!.env.example
+huggingface.txt
+*.pem
+*credentials*.json
+
+# --- 데이터 / 인덱스 ---
+data/
+*.lance/
+*.jsonl
+!tests/fixtures/*.jsonl
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# --- Colab / 노트북 ---
+.ipynb_checkpoints/
+
+# --- 에디터 / OS ---
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

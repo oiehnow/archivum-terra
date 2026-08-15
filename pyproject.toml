@@ -1,0 +1,54 @@
+[project]
+name = "wh40k-lore-rag"
+version = "0.1.0"
+description = "Warhammer 40k 로어 RAG — Fandom 위키 기반 근거 인용 질의응답"
+requires-python = ">=3.10"
+
+# 공용 순수 로직(wh40k/)이 쓰는 최소 의존성.
+# 로컬에서는 이것만 설치해도 전체 테스트가 돈다 (torch/GPU 불필요).
+dependencies = [
+    "httpx>=0.27",
+    "mwparserfromhell>=0.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+# Colab 전용: 임베딩과 인덱스 빌드. 로컬에 설치하지 않는다.
+index = [
+    "torch",
+    "sentence-transformers>=3.0",
+    "lancedb>=0.13",
+    "datasets>=2.20",
+    "huggingface-hub>=0.25",
+    "bm25s>=0.2",
+]
+
+# HF Space 전용: 서비스 런타임.
+space = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "authlib>=1.3",
+    "itsdangerous>=2.2",
+    "google-genai>=1.0",
+    "lancedb>=0.13",
+    "bm25s>=0.2",
+    "huggingface-hub>=0.25",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["wh40k"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

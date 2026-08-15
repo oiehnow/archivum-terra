@@ -1,0 +1,12 @@
+data/
+.venv/
+.env
+.env.*
+huggingface.txt
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+scripts/
+notebooks/
+.git/

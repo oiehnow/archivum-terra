@@ -1,0 +1,25 @@
+# Render 배포 설정 (Blueprint)
+#
+# 질의 임베딩을 HF Inference API 에 맡겨 서버에는 모델도 torch 도 없다.
+# 실측 메모리 226MB 로 무료 512MB 인스턴스에 들어간다.
+services:
+  - type: web
+    name: archivum-terra
+    runtime: docker
+    dockerfilePath: ./space/Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore
+    healthCheckPath: /healthz
+    envVars:
+      # HF Inference API 호출용. Render 대시보드에서 값을 넣는다 (저장소에 두지 않는다).
+      - key: HF_TOKEN
+        sync: false
+      - key: EMBED_BACKEND
+        value: api
+      - key: INDEX_DIR
+        value: /tmp/index
+      - key: QUOTA_DB
+        value: /tmp/quota.sqlite3
+      - key: HF_HOME
+        value: /tmp/.hf

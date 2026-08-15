@@ -1,0 +1,1387 @@
+<title>Archivum Terra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   ARCHIVUM TERRA — 임페리얼 코기테이터 단말
+   인광 그린 CRT. 의도적 단일 테마 (모든 색을 명시적으로 칠한다).
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --screen:      #060D04;
+  --screen-deep: #030702;
+  --panel:       #0B1607;
+  --edge:        #2A4A18;
+  --edge-hot:    #4C8A28;
+  --phos:        #9DFF3C;
+  --phos-dim:    #5A9E23;
+  --phos-ghost:  #33591A;
+  --amber:       #FFB000;
+  --blood:       #FF3B2F;
+  --ink:         #061003;
+
+  --f-mono: "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Courier New", monospace;
+  --f-body: "Segoe UI", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+
+  --step--2: clamp(.62rem, .59rem + .14vw, .7rem);
+  --step--1: clamp(.72rem, .68rem + .18vw, .82rem);
+  --step-0:  clamp(.9rem, .86rem + .22vw, 1rem);
+  --step-1:  clamp(1.05rem, .97rem + .4vw, 1.25rem);
+  --step-3:  clamp(1.6rem, 1.1rem + 2.6vw, 3rem);
+
+  --glow: 0 0 6px currentColor, 0 0 18px color-mix(in srgb, currentColor 35%, transparent);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--screen-deep);
+  color: var(--phos);
+  font-family: var(--f-mono);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  text-shadow: var(--glow);
+}
+
+/* ── CRT 유리: 비네팅 + 인광 번짐 ── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 75% 60% at 50% 42%, #12240B 0%, #0A1206 45%, var(--screen-deep) 100%);
+}
+
+/* ── 스캔라인 + 미세 플리커 ── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,.34) 0 1px,
+      transparent 1px 3px),
+    linear-gradient(90deg,
+      rgba(0,0,0,.5) 0%, transparent 6%, transparent 94%, rgba(0,0,0,.5) 100%);
+  animation: flicker 5.5s steps(30) infinite;
+}
+@keyframes flicker {
+  0%, 96%, 100% { opacity: 1; }
+  97%           { opacity: .82; }
+  98%           { opacity: 1; }
+  99%           { opacity: .9; }
+}
+
+/* ── 배경 의사 데이터 (좌우 사이드 패널) ── */
+.noise {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: clamp(120px, 15vw, 230px);
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  font-size: var(--step--2);
+  line-height: 1.9;
+  color: var(--phos-ghost);
+  text-shadow: none;
+  white-space: pre;
+  opacity: .55;
+  mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent);
+}
+.noise.l { left: 0;  padding-left: .8rem; }
+.noise.r { right: 0; padding-right: .8rem; text-align: right; }
+@media (max-width: 900px) { .noise { display: none; } }
+
+/* ── 코너 브래킷 ── */
+.brackets { position: fixed; inset: 0; z-index: 2; pointer-events: none; color: var(--edge-hot); }
+.brackets i {
+  position: absolute;
+  width: clamp(26px, 4vw, 46px);
+  height: clamp(26px, 4vw, 46px);
+  border: 2px solid currentColor;
+  opacity: .8;
+}
+.brackets .tl { top: 12px; left: 12px;  border-right: 0; border-bottom: 0; }
+.brackets .tr { top: 12px; right: 12px; border-left: 0;  border-bottom: 0; }
+.brackets .bl { bottom: 12px; left: 12px;  border-right: 0; border-top: 0; }
+.brackets .br { bottom: 12px; right: 12px; border-left: 0;  border-top: 0; }
+
+/* ── 상단 바 ── */
+.topbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.15rem clamp(1.4rem, 5vw, 3.6rem) .5rem;
+  font-size: var(--step--1);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+}
+.topbar .l, .topbar .r { display: flex; align-items: center; gap: .7rem; }
+
+.skull { width: 17px; height: 17px; color: var(--phos-dim); flex: none; }
+
+.helpbtn {
+  background: none;
+  border: 1px solid var(--edge-hot);
+  color: var(--phos-dim);
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .2rem .6rem;
+  cursor: pointer;
+  text-shadow: none;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.helpbtn:hover { color: var(--ink); background: var(--phos); border-color: var(--phos); }
+.helpbtn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* ── 사용법 모달 ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: none;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(1rem, 5vh, 3rem) 1.25rem;
+  background: rgba(2, 6, 1, .84);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.overlay[open] { display: flex; }
+
+.modal {
+  position: relative;
+  width: min(680px, 100%);
+  flex: 0 0 auto;
+  margin: auto;
+  overflow-x: hidden;
+  outline: none;
+  background: var(--panel);
+  border: 1px solid var(--phos-dim);
+  padding: 1.6rem clamp(1.2rem, 4vw, 2.1rem) 1.8rem;
+  box-shadow: 0 0 60px rgba(157, 255, 60, .12), inset 0 0 40px rgba(157, 255, 60, .04);
+}
+.modal::before, .modal::after {
+  content: "";
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 2px solid var(--phos);
+}
+.modal::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.modal::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.modal h2 {
+  margin: 0 0 .3rem;
+  font-family: var(--f-mono);
+  font-size: var(--step-1);
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--phos);
+}
+.modal .lede {
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  color: var(--phos-dim);
+  text-shadow: none;
+  margin: 0 0 1.4rem;
+}
+
+.modal h3 {
+  margin: 1.5rem 0 .7rem;
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.modal h3::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
+
+.modal p, .modal li {
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  color: #C9F79B;
+  text-shadow: none;
+}
+.modal p { margin: 0 0 .7rem; }
+.modal b { color: var(--phos); font-weight: 600; }
+
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: .8rem; counter-reset: step; }
+.steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .8rem;
+  align-items: start;
+}
+.steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  padding: .05rem .45rem;
+  text-shadow: 0 0 6px var(--amber);
+}
+
+.qa { display: grid; gap: .7rem; }
+.qa div { border-left: 2px solid var(--edge-hot); padding-left: .8rem; }
+.qa dt {
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: .1em;
+  color: var(--phos);
+  margin-bottom: .15rem;
+}
+.qa dd { margin: 0; font-family: var(--f-body); font-size: var(--step--1); color: var(--phos-dim); text-shadow: none; }
+
+.modal-close {
+  margin-top: 1.6rem;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--phos);
+  color: var(--phos);
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  padding: .7rem;
+  cursor: pointer;
+  text-shadow: var(--glow);
+  transition: background .15s, color .15s;
+}
+.modal-close:hover { background: var(--phos); color: var(--ink); text-shadow: none; }
+.modal-close:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+.authbtn {
+  border: 1px solid var(--phos-dim);
+  color: var(--phos);
+  text-decoration: none;
+  padding: .2rem .7rem;
+  font-size: var(--step--1);
+  letter-spacing: .16em;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.authbtn:hover { background: var(--phos); color: var(--ink); text-shadow: none; border-color: var(--phos); }
+.authbtn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* 오류 알림 */
+.notice {
+  border: 1px solid var(--amber);
+  border-left-width: 3px;
+  background: #1A1405;
+  color: var(--amber);
+  padding: .8rem 1rem;
+  margin-bottom: 1rem;
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  text-shadow: none;
+}
+
+.pip {
+  width: 7px; height: 7px;
+  background: var(--phos);
+  box-shadow: 0 0 8px var(--phos);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: .25; } }
+
+.rule {
+  position: relative;
+  z-index: 5;
+  height: 1px;
+  margin: 0 clamp(1.4rem, 5vw, 3.6rem);
+  background: linear-gradient(90deg, transparent, var(--edge-hot) 12%, var(--edge-hot) 88%, transparent);
+}
+
+/* ── 스테이지 ── */
+.stage {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem clamp(1.2rem, 5vw, 2rem) 3rem;
+  width: 100%;
+}
+body.searched .stage { justify-content: flex-start; padding-top: 1.2rem; }
+
+/* ── 히어로 ── */
+.hero { text-align: center; margin-bottom: 2rem; }
+body.searched .hero { display: none; }
+
+.eyebrow {
+  font-size: var(--step--1);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+  margin: 0 0 1rem;
+}
+.eyebrow::before { content: "// "; }
+.eyebrow::after  { content: " //"; }
+
+/* 반전 하이라이트 박스 — 참조 이미지의 핵심 장치 */
+.wordmark {
+  display: inline-block;
+  margin: 0;
+  padding: .3em 1em;
+  background: var(--phos);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: var(--step-3);
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  text-shadow: none;
+  box-shadow: 0 0 26px color-mix(in srgb, var(--phos) 55%, transparent);
+  text-wrap: balance;
+}
+
+.subtitle {
+  font-size: var(--step--1);
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+  margin: 1rem 0 0;
+}
+
+.hero-hi {
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--phos-dim);
+  text-shadow: none;
+  margin: .6rem 0 0;
+}
+
+/* ── 검색 ── */
+.searchwrap { width: 100%; max-width: 660px; }
+body.searched .searchwrap { max-width: 860px; margin-bottom: 1.5rem; }
+
+.field-label {
+  font-size: var(--step--1);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+  margin-bottom: .45rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.field-label::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  background: var(--panel);
+  border: 1px solid var(--edge-hot);
+  padding: .55rem .55rem .55rem .9rem;
+  box-shadow: inset 0 0 24px rgba(157,255,60,.06), 0 0 22px rgba(0,0,0,.7);
+  position: relative;
+}
+/* 입력 필드 코너 마커 */
+.searchbar::before, .searchbar::after {
+  content: "";
+  position: absolute;
+  width: 9px; height: 9px;
+  border: 2px solid var(--phos);
+  pointer-events: none;
+}
+.searchbar::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.searchbar::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.searchbar:focus-within { border-color: var(--phos); box-shadow: inset 0 0 30px rgba(157,255,60,.1), 0 0 30px rgba(157,255,60,.18); }
+
+.prompt { color: var(--phos); font-weight: 700; flex: none; }
+
+#q {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--phos);
+  font-family: var(--f-body);
+  font-size: var(--step-1);
+  padding: .5rem 0;
+  text-shadow: var(--glow);
+  caret-color: var(--phos);
+}
+#q::placeholder { color: var(--phos-ghost); text-shadow: none; }
+
+.ask {
+  flex: none;
+  border: 1px solid var(--phos);
+  background: transparent;
+  color: var(--phos);
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  padding: .65rem 1.2rem;
+  cursor: pointer;
+  text-shadow: var(--glow);
+  transition: background .15s, color .15s;
+}
+.ask:hover:not(:disabled) { background: var(--phos); color: var(--ink); text-shadow: none; }
+.ask:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.ask:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── 예시 질의 ── */
+.samples { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: 1rem; }
+body.searched .samples { display: none; }
+
+.samples button {
+  background: none;
+  border: 1px dashed var(--edge-hot);
+  color: var(--phos-dim);
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  padding: .35rem .8rem;
+  cursor: pointer;
+  text-shadow: none;
+  transition: color .15s, border-color .15s, border-style .15s;
+}
+.samples button::before { content: "> "; font-family: var(--f-mono); }
+.samples button:hover { color: var(--phos); border-color: var(--phos); border-style: solid; }
+.samples button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* ── 결과 ── */
+.results { width: 100%; max-width: 860px; display: none; }
+body.searched .results { display: block; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--edge-hot);
+  padding: 1.3rem 1.4rem;
+  position: relative;
+  box-shadow: inset 0 0 30px rgba(157,255,60,.045);
+}
+.panel::before, .panel::after {
+  content: "";
+  position: absolute;
+  width: 11px; height: 11px;
+  border: 2px solid var(--phos);
+}
+.panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.panel::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.panel-label {
+  font-size: var(--step--1);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+  margin-bottom: .9rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.panel-label::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
+
+.answer-body {
+  font-family: var(--f-body);
+  max-width: 68ch;
+  text-shadow: none;
+  color: #C9F79B;
+}
+.answer-body p { margin: 0 0 .9rem; }
+.answer-body p:last-child { margin-bottom: 0; }
+.answer-body b { color: var(--phos); font-weight: 600; text-shadow: var(--glow); }
+.answer-body i { color: #B9EE86; font-style: italic; }
+
+.answer-body ul {
+  margin: 0 0 .9rem;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: .5rem;
+}
+.answer-body ul:last-child { margin-bottom: 0; }
+.answer-body li { position: relative; padding-left: 1.3rem; }
+.answer-body li::before {
+  content: "▪";
+  position: absolute;
+  left: .25rem;
+  color: var(--phos-dim);
+  font-family: var(--f-mono);
+}
+
+.answer-body code {
+  font-family: var(--f-mono);
+  font-size: .9em;
+  background: #0A1505;
+  border: 1px solid var(--edge);
+  padding: .05em .35em;
+  color: var(--phos);
+}
+
+.cite {
+  font-family: var(--f-mono);
+  font-size: .76em;
+  color: var(--amber);
+  vertical-align: super;
+  padding: 0 .12em;
+  text-decoration: none;
+  text-shadow: 0 0 6px var(--amber);
+}
+.cite:hover { text-decoration: underline; }
+
+.caret {
+  display: inline-block;
+  width: .55em; height: 1.05em;
+  background: var(--phos);
+  vertical-align: text-bottom;
+  box-shadow: 0 0 8px var(--phos);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── 대기 중 터미널 로그 ── */
+.booting {
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  line-height: 1.9;
+  color: var(--phos-dim);
+  text-shadow: none;
+  display: grid;
+  gap: .1rem;
+}
+.booting .line::before { content: "> "; color: var(--phos-ghost); }
+.booting .line.done { color: var(--phos-ghost); }
+.booting .line.done::after { content: " OK"; color: var(--phos); }
+
+/* ── 검열 (검색 결과 없음) ── */
+/* 본문은 가독성 때문에 68ch 로 묶여 있다.
+   검열 배너는 패널 전체 폭을 기준으로 가운데 놓아야 하므로 그 제한을 푼다. */
+.answer-body:has(.redacted) { max-width: none; }
+
+.redacted {
+  display: grid;
+  gap: .9rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1.4rem .5rem .6rem;
+}
+
+.redacted-bar {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  border: 1px solid var(--blood);
+  background: repeating-linear-gradient(
+    135deg, #1A0603 0 10px, #240804 10px 20px);
+  color: var(--blood);
+  font-family: var(--f-mono);
+  font-size: var(--step-0);
+  letter-spacing: .1em;
+  padding: 1rem 1.2rem;
+  text-shadow: 0 0 8px var(--blood);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.redacted-bar:hover { border-color: #FF6B5F; }
+.redacted-bar:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+.redacted-bar .sigil { font-size: 1.15em; }
+.redacted-bar .hint {
+  display: block;
+  margin-top: .5rem;
+  font-size: var(--step--1);
+  letter-spacing: .16em;
+  color: #8A3A33;
+  text-shadow: none;
+}
+
+.redacted-detail {
+  display: none;
+  max-width: 34rem;
+  border-left: 2px solid var(--phos-dim);
+  padding-left: 1rem;
+  text-align: left;
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  color: var(--phos-dim);
+  text-shadow: none;
+  line-height: 1.75;
+}
+.redacted-detail[open] { display: block; }
+.redacted-detail b { color: var(--phos); }
+
+/* ── 출처 ── */
+.sources { margin-top: 1.4rem; }
+.source-grid { display: grid; gap: .5rem; }
+
+.source {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: .85rem;
+  align-items: center;
+  padding: .7rem .9rem;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--phos-dim);
+  text-decoration: none;
+  color: inherit;
+  transition: border-left-color .15s, background .15s, transform .15s;
+}
+.source:hover { border-left-color: var(--phos); background: #10200A; transform: translateX(3px); }
+.source:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.source .n {
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  padding: .05rem .4rem;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 6px var(--amber);
+}
+.source .t { font-family: var(--f-body); font-weight: 600; color: var(--phos); text-shadow: none; }
+.source .s { font-size: var(--step--1); color: var(--phos-dim); text-shadow: none; letter-spacing: .06em; }
+.source .go { font-size: var(--step--1); color: var(--phos-ghost); }
+
+/* ── 하단 데이터 블록 (참조 이미지의 PLANET/TITHE GRADE) ── */
+.readout {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: .4rem 2rem;
+  padding: 1rem clamp(1.4rem, 5vw, 3.6rem) 0;
+  font-size: var(--step--1);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--phos-dim);
+}
+.readout dl { display: flex; gap: .5rem; margin: 0; }
+.readout dt { color: var(--phos-ghost); }
+.readout dt::after { content: ":"; }
+.readout dd { margin: 0; color: var(--phos); }
+.readout dd.hot { color: var(--amber); text-shadow: 0 0 6px var(--amber); }
+
+/* Origin 항목 아래로 관련 링크를 붙인다 */
+.readout-col { display: grid; gap: .35rem; justify-items: start; }
+.readout-col .extlink {
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: none;
+  border: 0;
+  padding: 0;
+  color: var(--phos-dim);
+  text-shadow: none;
+  transition: color .15s;
+}
+.readout-col .extlink::before { content: "▸ "; font-family: var(--f-mono); color: var(--phos-ghost); }
+.readout-col .extlink:hover { color: var(--phos); text-decoration: underline; background: none; }
+.readout-col .extlink:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* ── 푸터 ── */
+.footer {
+  position: relative;
+  z-index: 5;
+  padding: .9rem clamp(1.4rem, 5vw, 3.6rem) 2rem;
+  font-family: var(--f-body);
+  font-size: var(--step--1);
+  color: var(--phos-ghost);
+  text-shadow: none;
+  text-align: center;
+  line-height: 1.75;
+}
+.footer a { color: var(--phos-dim); }
+.footer a:hover { color: var(--phos); }
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem .9rem;
+  margin-bottom: .9rem;
+}
+
+.byline,
+.extlink {
+  display: inline-block;
+  padding: .3rem .95rem;
+  border: 1px solid var(--phos-dim);
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--phos);
+  text-shadow: var(--glow);
+  text-decoration: none;
+  transition: background .15s, color .15s, border-color .15s;
+}
+a.byline:hover { background: var(--phos); color: var(--ink); border-color: var(--phos); text-shadow: none; }
+a.byline:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+.extlink {
+  letter-spacing: .12em;
+  text-transform: none;
+  font-family: var(--f-body);
+  text-decoration: none;
+  border-color: var(--edge-hot);
+  color: var(--phos-dim);
+  text-shadow: none;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.extlink::before { content: "▸ "; font-family: var(--f-mono); }
+.extlink:hover { color: var(--ink); background: var(--phos); border-color: var(--phos); }
+.extlink:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<script src="https://js.puter.com/v2/"></script>
+
+<div class="noise l" id="noiseL" aria-hidden="true"></div>
+<div class="noise r" id="noiseR" aria-hidden="true"></div>
+
+<div class="brackets" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
+
+<header class="topbar">
+  <div class="l">
+    <svg class="skull" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 1C6.9 1 3 4.9 3 9.8c0 2.7 1.2 5 3.1 6.5V20c0 1.7 1.3 3 3 3h5.8c1.7 0 3-1.3 3-3v-3.7c1.9-1.5 3.1-3.8 3.1-6.5C21 4.9 17.1 1 12 1zM8.4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7.2 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM10 18h-1v-2h1v2zm2.5 0h-1v-2h1v2zm2.5 0h-1v-2h1v2z"/>
+    </svg>
+    <span>Cogitator Active</span>
+    <button class="helpbtn" id="helpbtn" type="button" aria-haspopup="dialog">How to Use</button>
+  </div>
+  <div class="r">
+    <span class="pip" aria-hidden="true"></span>
+    <span id="quota">Establishing link…</span>
+    <a class="authbtn" id="authbtn" href="/auth/login" hidden>Sign in</a>
+  </div>
+</header>
+<div class="rule"></div>
+
+<main class="stage">
+  <div class="hero">
+    <p class="eyebrow">Adeptus Administratum · Datavault M41</p>
+    <h1 class="wordmark">Archivum Terra</h1>
+    <p class="subtitle">Lexicanum Query Interface</p>
+    <p class="hero-hi">질문을 입력하시오.</p>
+  </div>
+
+  <div class="searchwrap">
+    <div class="field-label">Query Input</div>
+    <form class="searchbar" id="form" role="search">
+      <span class="prompt" aria-hidden="true">&gt;</span>
+      <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
+             placeholder="카디아는 왜 함락되었나?" aria-label="로어 질문">
+      <button class="ask" id="ask" type="submit">Interrogate</button>
+    </form>
+
+    <div class="samples">
+      <button type="button">호루스 헤러시가 뭐야?</button>
+      <button type="button">Why did Cadia fall?</button>
+      <button type="button">오크는 어떻게 번식해?</button>
+      <button type="button">Who is Abaddon the Despoiler?</button>
+    </div>
+  </div>
+
+  <section class="results" id="results" aria-live="polite">
+    <div class="panel">
+      <div class="panel-label">Archive Response</div>
+      <div class="answer-body" id="answer"></div>
+    </div>
+    <div class="sources" id="sources" hidden>
+      <div class="panel-label" style="margin-top:1.4rem">Cited Records</div>
+      <div class="source-grid" id="sourceGrid"></div>
+    </div>
+  </section>
+</main>
+
+<div class="readout">
+  <div class="readout-col">
+    <dl><dt>Origin</dt><dd>Warhammer 40k Wiki</dd></dl>
+    <a class="extlink" href="https://gall.dcinside.com/mgallery/board/lists/?id=blacklibrary"
+       target="_blank" rel="noopener">블랙 라이브러리 갤러리</a>
+  </div>
+  <dl><dt>Records</dt><dd id="recCount">7,299</dd></dl>
+  <dl><dt>Clearance</dt><dd class="hot">Vermilion</dd></dl>
+  <dl><dt>Operator</dt><dd>OIEH</dd></dl>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal" id="modal" tabindex="-1">
+    <h2 id="helpTitle">사용법</h2>
+    <p class="lede">Warhammer 40,000 로어를 묻고, 출처와 함께 답을 받는 아카이브입니다.</p>
+
+    <h3>쓰는 법</h3>
+    <ol class="steps">
+      <li><span>검색창에 <b>궁금한 것을 입력</b>합니다. 한국어로 물으면 한국어로, 영어로 물으면 영어로 답합니다.</span></li>
+      <li><span><b>조회</b>를 누릅니다. 처음 한 번은 Puter 창이 뜰 수 있습니다 — <b>계속</b>을 누르면 계정이 자동으로 만들어집니다. 이메일도 비밀번호도 필요 없습니다.</span></li>
+      <li><span>답변이 나오면 문장 끝의 <b>[1] [2]</b> 번호를 누르세요. 아래 <b>출처</b> 카드로 이동하고, 카드를 누르면 실제 위키 문서가 열립니다.</span></li>
+    </ol>
+
+    <h3>왜 Puter 계정이 필요한가</h3>
+    <p>답변을 만드는 데는 AI 사용료가 듭니다. 운영자가 열쇠 하나로 모두를 감당하면 <b>사람이 몰리는 순간 그날 몫이 동나</b> 아무도 쓰지 못합니다.</p>
+    <p>Puter는 <b>각자 자기 몫으로 쓰는 방식</b>입니다. 그래서 몇 명이 오든 서로의 사용량을 갉아먹지 않고, 이 사이트는 광고나 결제 없이 유지됩니다. 여러분이 내는 돈은 <b>없습니다</b> — Puter가 계정마다 무료 사용량을 주고, 그 안에서 씁니다.</p>
+
+    <h3>자주 묻는 것</h3>
+    <dl class="qa">
+      <div><dt>돈이 드나요?</dt><dd>아니요. 무료 사용량 안에서 쓰며, 다 쓰면 Puter가 본인에게 안내합니다.</dd></div>
+      <div><dt>뭘 설치하나요?</dt><dd>아무것도요. 브라우저만 있으면 됩니다.</dd></div>
+      <div><dt>제 정보가 넘어가나요?</dt><dd>입력한 질문과 검색된 위키 본문만 AI로 전달됩니다. 이 사이트는 계정 정보를 저장하지 않습니다.</dd></div>
+      <div><dt>답이 이상해요</dt><dd>아카이브에 있는 문서만 근거로 답합니다. 근거가 없으면 지어내지 않고 없다고 말합니다. 인용 링크로 원문을 직접 확인해 보세요.</dd></div>
+    </dl>
+
+    <button class="modal-close" id="modalClose" type="button">닫기</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a class="byline" href="https://itoieh.blogspot.com/" target="_blank" rel="noopener">Made by OIEH</a>
+  </div>
+  본 자료는 <a href="https://warhammer40k.fandom.com" target="_blank" rel="noopener">Warhammer 40k Wiki</a>에서 가져왔으며
+  <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>을 따릅니다.<br>
+  Games Workshop과 무관한 비공식 팬 프로젝트입니다. Warhammer 40,000은 Games Workshop Ltd.의 상표입니다.
+</footer>
+
+<script>
+const form    = document.getElementById('form');
+const input   = document.getElementById('q');
+const ask     = document.getElementById('ask');
+const answer  = document.getElementById('answer');
+const sources = document.getElementById('sources');
+const grid    = document.getElementById('sourceGrid');
+const quota   = document.getElementById('quota');
+const authbtn = document.getElementById('authbtn');
+const results = document.getElementById('results');
+
+let remaining = 20;
+let quotaTotal = 20;
+let authed = false;
+let demoMode = false;
+let llmMode = 'puter';          // 'puter' = 브라우저가 직접 생성, 'server' = 서버가 생성
+let puterModel = 'gpt-5-nano';
+
+const puterReady = () => typeof puter !== 'undefined' && puter?.ai?.chat;
+
+/* 백엔드 설정을 읽어 어떤 경로로 답변을 만들지 정한다.
+   백엔드가 없으면(정적 미리보기) 데모 모드로 흐름만 보여준다. */
+(async function initSession() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('no backend');
+    const cfg = await res.json();
+    llmMode = cfg.llm_mode;
+    puterModel = cfg.puter_model || puterModel;
+
+    if (llmMode === 'puter') {
+      await initPuter();
+    } else {
+      await initServerAuth();
+    }
+  } catch {
+    demoMode = true;
+    quota.textContent = 'Demo Mode';
+  }
+})();
+
+/* Puter 경로: 방문자가 자기 Puter 계정으로 로그인하면 그 무료 할당량으로 답변이 생성된다.
+   운영자는 API 키도, 비용도 부담하지 않는다. */
+async function initPuter() {
+  if (!puterReady()) {
+    demoMode = true;
+    quota.textContent = 'Demo Mode';
+    return;
+  }
+  authed = await puter.auth.isSignedIn();
+  if (authed) {
+    const user = await puter.auth.getUser().catch(() => null);
+    quota.textContent = user?.username ? `Operator: ${user.username}` : 'Signed in';
+    authbtn.textContent = 'Sign out';
+    authbtn.href = '#';
+    authbtn.onclick = async (e) => { e.preventDefault(); await puter.auth.signOut(); location.reload(); };
+  } else {
+    quota.textContent = 'Sign in to query';
+    authbtn.textContent = 'Sign in';
+    authbtn.href = '#';
+    authbtn.onclick = async (e) => {
+      e.preventDefault();
+      try { await puter.auth.signIn(); location.reload(); } catch { /* 사용자가 닫음 */ }
+    };
+  }
+  authbtn.hidden = false;
+}
+
+async function initServerAuth() {
+  const res = await fetch('/api/me');
+  const me = await res.json();
+  authed = me.authenticated;
+  if (authed) {
+    quotaTotal = me.quota ?? 20;
+    remaining = me.remaining ?? quotaTotal;
+    quota.textContent = `Queries ${remaining} / ${quotaTotal}`;
+    authbtn.textContent = 'Sign out';
+    authbtn.href = '/auth/logout';
+  } else {
+    quota.textContent = 'Sign in required';
+    authbtn.textContent = 'Sign in';
+    authbtn.href = '/auth/login';
+  }
+  authbtn.hidden = false;
+}
+
+/* ── 배경 의사 데이터 생성 ── */
+const GLYPHS = ['ADEPT','VOX','SANCTUS','LITANY','SERVITOR','MACHINE SPIRIT','COGITATOR',
+                'DATA-SLATE','NOOSPHERE','LEXMECHANIC','RITE','PURITY SEAL','OMNISSIAH'];
+function fillNoise(el, rows) {
+  const lines = [];
+  for (let i = 0; i < rows; i++) {
+    const g = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    const hex = Math.floor(Math.random() * 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    const num = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+    lines.push(`${hex}  ${g.slice(0, 12).padEnd(12)} ${num}`);
+  }
+  el.textContent = lines.join('\n');
+}
+fillNoise(document.getElementById('noiseL'), 48);
+fillNoise(document.getElementById('noiseR'), 48);
+setInterval(() => {
+  fillNoise(document.getElementById('noiseL'), 48);
+  fillNoise(document.getElementById('noiseR'), 48);
+}, 2600);
+
+/* ── 데모 응답 (백엔드 미연결 시) ── */
+const DEMO = {
+  text: `카디아는 M41 999년 <b>제13차 블랙 크루세이드</b> 당시 함락되었습니다. 아바돈 더 디스포일러가 이끄는 혼돈 군세가 행성 표면에 상륙해 넓은 지역을 점령했습니다.<cite data-n="1"></cite>
+
+결정적 요인은 <b>파일런</b>이었습니다. 카디아 지표에 세워진 이 고대 네크론 구조물들은 아이 오브 테러의 워프 폭풍을 억제하는 역할을 했는데, 아바돈의 군세가 이를 무너뜨리자 워프 균열이 더 이상 억제되지 않았습니다.<cite data-n="2"></cite>
+
+결국 블랙스톤 포트리스가 행성에 충돌하며 카디아는 물리적으로 파괴되었고, 이머테리움에 삼켜져 <b>데드 월드</b>이자 <b>데몬 월드</b>가 되었습니다. 8억 5천만 인구 중 탈출한 생존자는 약 300만 명에 불과했습니다.<cite data-n="3"></cite>`,
+  sources: [
+    { n: 1, title: 'Cadia', section: '13th Black Crusade and Fall of Cadia',
+      url: 'https://warhammer40k.fandom.com/wiki/Cadia' },
+    { n: 2, title: 'Cadia', section: 'Era Indomitus',
+      url: 'https://warhammer40k.fandom.com/wiki/Cadia' },
+    { n: 3, title: 'Cadia', section: 'Legacy of Cadia',
+      url: 'https://warhammer40k.fandom.com/wiki/Cadia' }
+  ]
+};
+
+document.querySelectorAll('.samples button').forEach(b => {
+  b.addEventListener('click', () => { input.value = b.textContent; form.requestSubmit(); });
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q || ask.disabled) return;
+
+  // 미로그인이면 로그인부터 (Puter 는 팝업, 서버 경로는 리디렉트)
+  if (!demoMode && !authed) {
+    if (llmMode === 'puter' && puterReady()) {
+      try { await puter.auth.signIn(); location.reload(); } catch { /* 닫음 */ }
+    } else {
+      location.href = '/auth/login';
+    }
+    return;
+  }
+
+  document.body.classList.add('searched');
+  ask.disabled = true;
+  clearNotice();
+  answer.removeAttribute('data-raw');
+  sources.hidden = true;
+  grid.innerHTML = '';
+  startBootLog();
+
+  try {
+    await stream(q);
+  } catch (err) {
+    stopBootLog();
+    answer.innerHTML = '';
+    showNotice(err.message || '기록보관소에 접근하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+  } finally {
+    stopBootLog();
+    ask.disabled = remaining === 0;
+  }
+});
+
+function showNotice(text) {
+  clearNotice();
+  const el = document.createElement('div');
+  el.className = 'notice';
+  el.id = 'notice';
+  el.textContent = text;
+  results.prepend(el);
+}
+function clearNotice() {
+  document.getElementById('notice')?.remove();
+}
+
+/* 실제 백엔드(SSE)를 우선 시도하고, 없으면 데모로 흐름을 보여준다. */
+async function stream(q) {
+  // 정적 호스팅(백엔드 없음)에서는 API 를 부르지 않고 바로 데모로 간다.
+  if (demoMode) {
+    await typeDemo();
+    consumeQuota();
+    return;
+  }
+
+  if (llmMode === 'puter') return streamViaPuter(q);
+  return streamViaServer(q);
+}
+
+/* 서버는 검색만 하고, 답변 생성은 브라우저가 Puter 로 직접 한다. */
+async function streamViaPuter(q) {
+  const res = await fetch('/api/retrieve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: q })
+  });
+
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail.detail || `검색에 실패했습니다 (${res.status})`);
+  }
+
+  const { system, user, sources } = await res.json();
+  if (!sources || sources.length === 0) {
+    stopBootLog();
+    renderRedacted();
+    return;
+  }
+
+  const reply = await puter.ai.chat(
+    [{ role: 'system', content: system }, { role: 'user', content: user }],
+    { model: puterModel, stream: true }
+  );
+
+  let started = false;
+  for await (const part of reply) {
+    if (part?.type === 'error') throw new Error(part.message || '답변 생성에 실패했습니다.');
+    if (!part?.text) continue;
+    if (!started) {              // 첫 토큰이 오면 대기 로그를 걷어낸다
+      stopBootLog();
+      answer.innerHTML = '';
+      answer.setAttribute('data-raw', '');
+      started = true;
+    }
+    appendToken(part.text);
+  }
+
+  finishAnswer();
+  renderSources(sources);
+}
+
+async function streamViaServer(q) {
+  let res = null;
+  try {
+    res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+  } catch {
+    demoMode = true;
+  }
+
+  if (!res || res.status === 404) {   // 백엔드 없음 → 데모
+    demoMode = true;
+    await typeDemo();
+    consumeQuota();
+    return;
+  }
+
+  if (res.status === 401) { location.href = '/auth/login'; return; }
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail.detail || `요청이 거부되었습니다 (${res.status})`);
+  }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  let started = false;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const parts = buf.split('\n\n');
+    buf = parts.pop();
+    for (const part of parts) {
+      const line = part.trim();
+      if (!line.startsWith('data: ')) continue;
+      let ev;
+      try { ev = JSON.parse(line.slice(6)); } catch { continue; }
+
+      if (ev.token) {
+        if (!started) { stopBootLog(); answer.innerHTML = ''; started = true; }
+        appendToken(ev.token);
+      }
+      if (ev.sources) renderSources(ev.sources);
+      if (ev.error)   { stopBootLog(); showNotice(ev.error); return; }
+      if (ev.done && typeof ev.remaining === 'number') setQuota(ev.remaining);
+    }
+  }
+  finishAnswer();
+}
+
+async function typeDemo() {
+  await sleep(2200);          // 대기 로그를 잠깐 보여준 뒤 답변으로 넘어간다
+  stopBootLog();
+  answer.innerHTML = '';
+  const chunks = DEMO.text.split(/(?<=[\s>])/);
+  let html = '';
+  for (const c of chunks) {
+    html += c;
+    answer.innerHTML = renderCites(html) + '<span class="caret"></span>';
+    await sleep(13);
+  }
+  answer.innerHTML = renderCites(html);
+  renderSources(DEMO.sources);
+}
+
+function appendToken(t) {
+  const next = (answer.getAttribute('data-raw') || '') + t;
+  answer.setAttribute('data-raw', next);
+  answer.innerHTML = renderCites(next) + '<span class="caret"></span>';
+}
+
+const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+const inline = s => s
+  .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+  .replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, '<i>$1</i>')
+  .replace(/`(.+?)`/g, '<code>$1</code>')
+  .replace(/\[(\d+)\]/g, (_, n) => `<a class="cite" href="#src-${n}">[${n}]</a>`);
+
+/* LLM 이 돌려주는 것은 마크다운 + [n] 인용 마커다.
+   데모 텍스트는 <b>/<cite> 를 직접 쓰므로 둘 다 받아들인다. */
+function renderCites(text) {
+  const isDemo = text.includes('<cite') || text.includes('<b>');
+  const source = isDemo ? text.replace(/<cite data-n="(\d+)"><\/cite>/g, '[$1]') : text;
+
+  return source
+    .split(/\n\n+/)
+    .filter(block => block.trim())
+    .map(block => {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+
+      // 불릿 목록은 <ul> 로, 나머지는 문단으로
+      if (lines.length && lines.every(l => /^[-*•]\s+/.test(l))) {
+        const items = lines
+          .map(l => '<li>' + inline(isDemo ? l.slice(2) : esc(l.replace(/^[-*•]\s+/, ''))) + '</li>')
+          .join('');
+        return '<ul>' + items + '</ul>';
+      }
+
+      const body = lines
+        .map(l => {
+          const stripped = l.replace(/^#{1,6}\s+/, '');
+          return inline(isDemo ? stripped : esc(stripped));
+        })
+        .join('<br>');
+      return '<p>' + body + '</p>';
+    })
+    .join('');
+}
+
+/* 검색 결과가 없을 때. 세계관 톤으로 먼저 알리고,
+   누르면 실제로 무슨 일이 벌어진 것인지 평범한 말로 설명한다. */
+function renderRedacted() {
+  answer.innerHTML = `
+    <div class="redacted">
+      <button class="redacted-bar" id="redactedBar" type="button"
+              aria-expanded="false" aria-controls="redactedDetail">
+        <span class="sigil">╪</span> 이단 심문소에 의하여 검열된 자료입니다
+        <span class="hint">▸ 눌러서 사유 확인</span>
+      </button>
+      <div class="redacted-detail" id="redactedDetail">
+        실제로는 <b>이 아카이브에 없는 자료</b>입니다. 검열된 것이 아니라,
+        Warhammer 40k 위키에서 관련 문서를 찾지 못했다는 뜻입니다.<br><br>
+        고유명사를 정확히 써 보거나(예: <b>카디아</b>, <b>Abaddon</b>),
+        질문을 조금 더 넓게 바꿔 보세요. 이 아카이브는 <b>로어 문서</b>만 담고 있어
+        게임 규칙이나 소설 원문은 답할 수 없습니다.
+      </div>
+    </div>`;
+
+  const bar = document.getElementById('redactedBar');
+  const detail = document.getElementById('redactedDetail');
+  bar.addEventListener('click', () => {
+    const open = detail.hasAttribute('open');
+    detail.toggleAttribute('open', !open);
+    bar.setAttribute('aria-expanded', String(!open));
+    bar.querySelector('.hint').textContent = open ? '▸ 눌러서 사유 확인' : '▾ 접기';
+  });
+}
+
+function renderSources(list) {
+  grid.innerHTML = list.map(s => `
+    <a class="source" id="src-${s.n}" href="${s.url}" target="_blank" rel="noopener">
+      <span class="n">${s.n}</span>
+      <span>
+        <span class="t">${s.title}</span><br>
+        <span class="s">${s.section}</span>
+      </span>
+      <span class="go" aria-hidden="true">↗</span>
+    </a>`).join('');
+  sources.hidden = false;
+}
+
+function finishAnswer() {
+  const raw = answer.getAttribute('data-raw');
+  if (raw) answer.innerHTML = renderCites(raw);
+}
+
+/* 서버 LLM 경로에서만 쓰는 일일 한도 표시.
+   Puter 경로는 각 사용자가 자기 할당량을 쓰므로 서버가 셀 것이 없다. */
+function setQuota(value) {
+  remaining = value;
+  quota.textContent = `Queries ${remaining} / ${quotaTotal}`;
+  if (remaining <= 0) {
+    ask.disabled = true;
+    quota.textContent = 'Quota Expended — Resets 00:00 KST';
+  }
+}
+
+function consumeQuota() {
+  if (llmMode === 'server' && !demoMode) setQuota(Math.max(0, remaining - 1));
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── 대기 중 터미널 로그 ──
+   검색과 답변 생성 사이의 빈 시간을 채운다. 부팅 로그처럼 한 줄씩 타이핑된다. */
+const BOOT_LINES = [
+  '코기테이터가 가동 준비 중입니다',
+  '기계령 조상님을 깨우고 있습니다',
+  '테크프리스트가 머신 스피릿을 달래고 있습니다',
+  '성유를 발라 데이터 슬레이트를 정화하는 중입니다',
+  '리타니 오브 액티베이션을 봉독하는 중입니다',
+  '아카이브 봉인을 해제하는 중입니다',
+  '서보 스컬이 기록보관소로 향하고 있습니다',
+  '옴니시아의 축복을 기다리는 중입니다',
+  '노스피어에 접속하는 중입니다',
+  '렉스메카닉이 색인을 대조하는 중입니다',
+  '퓨리티 씰의 무결성을 확인하는 중입니다',
+  '만 년 묵은 양피지의 먼지를 털어내는 중입니다',
+  '이단적 기록이 섞이지 않았는지 검증하는 중입니다',
+  '데이터 룸의 향로에 불을 붙이는 중입니다',
+  '스크라이브가 필사본을 펼치는 중입니다',
+  '기계교 의식에 따라 색인을 축성하는 중입니다',
+  '천공 카드를 순서대로 꽂는 중입니다',
+  '진공관에 예열을 넣는 중입니다',
+  '기록보관소의 녹슨 톱니를 돌리는 중입니다',
+  '리추얼 오브 인콰이어리를 집전하는 중입니다',
+  '연산 축복문 3,412행을 낭독하는 중입니다',
+  '서보이터가 색인 서랍을 여는 중입니다',
+  '이단 심문관의 열람 허가를 대조하는 중입니다',
+  '기억 코일에 성수를 뿌리는 중입니다',
+  '옴니시아여, 이 질의를 굽어살피소서',
+  '데이터 룸 하부에서 그렘린을 쫓아내는 중입니다',
+  '아스트로패스가 신호를 수신하는 중입니다',
+  '색인 서고 12구역의 조명을 점등하는 중입니다',
+  '기계 성령의 심기가 평온해지기를 기다립니다',
+  '분노한 코기테이터에게 향을 피우는 중입니다',
+  '금지 서고 접근 여부를 판별하는 중입니다',
+  '천 년째 돌아가는 연산 바퀴를 정렬하는 중입니다',
+  '렉시코그래퍼가 색인 카드를 넘기는 중입니다',
+  '축성된 톱니바퀴에 윤활유를 바르는 중입니다',
+  '기록의 순수성을 심문하는 중입니다',
+];
+
+let bootTimer = null;
+
+function startBootLog() {
+  const pool = [...BOOT_LINES];
+  answer.innerHTML = '<div class="booting" id="booting"></div>';
+  const box = document.getElementById('booting');
+  let cancelled = false;
+
+  (async function run() {
+    while (!cancelled) {
+      if (!pool.length) pool.push(...BOOT_LINES);
+      const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+
+      const line = document.createElement('div');
+      line.className = 'line';
+      box.appendChild(line);
+
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+
+      for (let i = 1; i <= pick.length && !cancelled; i++) {
+        line.textContent = pick.slice(0, i);
+        line.appendChild(caret);
+        await sleep(28);
+      }
+      if (cancelled) return;
+      caret.remove();
+      line.classList.add('done');
+
+      // 로그가 길어지면 위쪽을 걷어내 화면을 넘지 않게 한다
+      while (box.children.length > 6) box.removeChild(box.firstChild);
+      await sleep(420);
+    }
+  })();
+
+  bootTimer = () => { cancelled = true; };
+}
+
+function stopBootLog() {
+  if (bootTimer) { bootTimer(); bootTimer = null; }
+}
+
+/* ── 사용법 모달 ── */
+const overlay = document.getElementById('overlay');
+const helpbtn = document.getElementById('helpbtn');
+let lastFocus = null;
+
+function openHelp() {
+  lastFocus = document.activeElement;
+  overlay.setAttribute('open', '');
+  overlay.scrollTop = 0;
+  // 닫기 버튼에 포커스를 주면 브라우저가 거기로 스크롤해 제목이 잘린다.
+  document.getElementById('modal').focus({ preventScroll: true });
+}
+function closeHelp() {
+  overlay.removeAttribute('open');
+  lastFocus?.focus();
+}
+
+helpbtn.addEventListener('click', openHelp);
+document.getElementById('modalClose').addEventListener('click', closeHelp);
+overlay.addEventListener('click', (e) => { if (e.target === overlay) closeHelp(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && overlay.hasAttribute('open')) closeHelp();
+});
+</script>
