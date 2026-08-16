@@ -27,8 +27,9 @@ from wh40k.normalize import split_sections  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
 
-# 서비스는 무료 CPU 호스팅에서 돌아야 하므로 가벼운 모델을 기본으로 쓴다.
-EMBED_MODEL = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-small")
+# 서비스는 질의 임베딩을 HF Inference API 에 맡기므로 모델 크기가 호스팅 제약이 되지 않는다.
+# 검색 품질이 가장 좋은 BGE-M3 를 쓴다 (경량 모델은 Top-1 정확도가 8/12 → 6/12 로 떨어졌다).
+EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-m3")
 INDEX = Path(os.getenv("INDEX_OUT", str(ROOT / "data" / "index")))
 EMBED_BATCH = 64
 
@@ -110,6 +111,9 @@ def build(chunks: list[Chunk]) -> None:
     vectors = embed([c.text for c in chunks])
 
     print("\nLanceDB 테이블 생성 중...")
+    # 벡터를 fp16 으로 저장한다. fp32 면 147MB 라 리눅스 컨테이너에서 mmap 페이지가
+    # 그대로 메모리 사용량에 잡혀 512MB 무료 티어를 넘어선다 (실제로 OOM 재시작이 났다).
+    # 정규화된 임베딩이라 fp16 의 정밀도로도 검색 순위가 사실상 바뀌지 않는다.
     schema = pa.schema([
         pa.field("id", pa.string()),
         pa.field("title", pa.string()),
@@ -117,7 +121,7 @@ def build(chunks: list[Chunk]) -> None:
         pa.field("text", pa.string()),
         pa.field("source_url", pa.string()),
         pa.field("source", pa.string()),
-        pa.field("vector", pa.list_(pa.float32(), vectors.shape[1])),
+        pa.field("vector", pa.list_(pa.float16(), vectors.shape[1])),
     ])
     rows = [
         {
@@ -127,7 +131,7 @@ def build(chunks: list[Chunk]) -> None:
             "text": c.text,
             "source_url": c.source_url or "",
             "source": c.source,
-            "vector": vectors[i].tolist(),
+            "vector": vectors[i].astype("float16").tolist(),
         }
         for i, c in enumerate(chunks)
     ]

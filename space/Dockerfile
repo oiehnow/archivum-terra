@@ -20,9 +20,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 인덱스를 이미지에 굽는다.
 # 무료 티어는 유휴 시 컨테이너를 재우고 깨울 때 다시 띄우는데,
-# 그때마다 200MB 를 내려받으면 첫 방문자가 오래 기다린다.
-# repo 가 public 이라 빌드에 토큰이 필요 없다.
-RUN python -c "\
+# 그때마다 내려받으면 첫 방문자가 오래 기다린다. repo 가 public 이라 토큰이 필요 없다.
+#
+# INDEX_VERSION 을 바꾸면 이 레이어의 캐시가 무효화되어 새 인덱스를 다시 받는다.
+ARG INDEX_VERSION=fp16-1024d-35812
+RUN echo "index: ${INDEX_VERSION}" && python -c "\
 from huggingface_hub import snapshot_download; \
 snapshot_download('oiehnow/wh40k-lore-index', repo_type='dataset', local_dir='/app/index')" \
     && rm -rf /tmp/.hf
