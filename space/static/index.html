@@ -679,6 +679,7 @@ body.searched .results { display: block; }
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--phos-dim);
+  font-variant-numeric: tabular-nums;   /* 숫자가 계속 바뀌어도 폭이 흔들리지 않게 */
 }
 .readout dl { display: flex; gap: .5rem; margin: 0; }
 .readout dt { color: var(--phos-ghost); }
@@ -866,7 +867,7 @@ a.byline:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
        target="_blank" rel="noopener">블랙 라이브러리 갤러리</a>
     <button class="extlink supportbtn" id="supportbtn" type="button" aria-haspopup="dialog">SUPPORT</button>
   </div>
-  <dl><dt>Records</dt><dd id="recCount">7,299</dd></dl>
+  <dl><dt>Records</dt><dd id="recCount">0</dd></dl>
   <dl><dt>Clearance</dt><dd class="hot">Vermilion</dd></dl>
   <dl><dt>Operator</dt><dd>OIEH</dd></dl>
 </div>
@@ -1423,6 +1424,57 @@ function startBootLog() {
 function stopBootLog() {
   if (bootTimer) { bootTimer(); bootTimer = null; }
 }
+
+/* ── 기록 카운터 ──
+   실제 색인은 35,812청크지만, 임페리움 기록보관소의 규모감을 위한 장식이다.
+   방문할 때마다 조~해 단위의 다른 수에서 시작해 계속 불어난다.
+   자릿수는 Number 의 안전 범위를 넘으므로 BigInt 로 다룬다. */
+function randomRecordTotal() {
+  const digits = 13 + Math.floor(Math.random() * 6);   // 13자리(조) ~ 18자리(백경)
+  let s = String(1 + Math.floor(Math.random() * 9));
+  for (let i = 1; i < digits; i++) s += Math.floor(Math.random() * 10);
+  return BigInt(s);
+}
+
+function startRecordCounter() {
+  const el = document.getElementById('recCount');
+  if (!el) return;
+
+  const target = randomRecordTotal();
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const drift = (from) => {
+    let value = from;
+    setInterval(() => {
+      // 매번 조금씩 늘어나 아직 수집 중인 것처럼 보이게 한다
+      value += BigInt(1 + Math.floor(Math.random() * 900000));
+      el.textContent = value.toLocaleString();
+    }, 700 + Math.random() * 900);
+  };
+
+  if (reduced) {
+    el.textContent = target.toLocaleString();
+    drift(target);
+    return;
+  }
+
+  const DURATION = 2400;
+  const STEPS = 10000n;
+  const start = performance.now();
+
+  function tick(now) {
+    const p = Math.min(1, (now - start) / DURATION);
+    const eased = 1 - Math.pow(1 - p, 3);            // 빠르게 치솟다 잦아든다
+    const scaled = BigInt(Math.round(eased * Number(STEPS)));
+    el.textContent = ((target * scaled) / STEPS).toLocaleString();
+
+    if (p < 1) requestAnimationFrame(tick);
+    else drift(target);
+  }
+  requestAnimationFrame(tick);
+}
+
+startRecordCounter();
 
 /* ── 모달 (사용법 / 후원) ── */
 let lastFocus = null;
