@@ -14,7 +14,12 @@ import threading
 from pathlib import Path
 
 from space.embed_client import embed_query
-from wh40k.retrieve import drop_unmatched, merge_adjacent, reciprocal_rank_fusion
+from wh40k.retrieve import (
+    drop_unmatched,
+    is_off_topic,
+    merge_adjacent,
+    reciprocal_rank_fusion,
+)
 
 INDEX_DIR = Path(os.getenv("INDEX_DIR", "/data/index"))
 INDEX_REPO = os.getenv("HF_INDEX_REPO", "oiehnow/wh40k-lore-index")
@@ -92,6 +97,13 @@ def search(question: str, top_n: int = FUSED_TOP_N) -> list[dict]:
 
     vector = embed_query(question, state["embed_model"])
     vector_hits = state["table"].search(vector).limit(VECTOR_TOP_K).to_list()
+
+    # 아카이브와 무관한 질문이면 빈 결과를 돌려준다.
+    # 벡터 검색은 무엇을 묻든 가장 가까운 문서를 내놓으므로, 여기서 끊지 않으면
+    # 상관없는 문서를 근거로 답을 지어내게 된다.
+    if is_off_topic([hit["_distance"] for hit in vector_hits]):
+        return []
+
     vector_ranking = [hit["id"] for hit in vector_hits]
 
     tokens = bm25s.tokenize(question, stopwords="en", show_progress=False)

@@ -14,6 +14,34 @@ from collections.abc import Sequence
 DEFAULT_K = 60
 DEFAULT_TOP_N = 8
 
+# 아카이브 밖 질문을 가려내는 거리 임계값.
+# 벡터 검색은 무엇을 묻든 "가장 가까운" 문서를 돌려주므로, 걸러내지 않으면
+# "손흥민 골 기록" 에도 40k 문서를 근거로 답을 지어낸다.
+#
+# 실측 (BGE-M3, 상위 8개 평균 거리):
+#   40k 질문      0.83 ~ 1.014
+#   무관한 질문   1.071 ~ 1.21
+# 두 구간 사이에 임계값을 둔다.
+OFF_TOPIC_DISTANCE = 1.042
+OFF_TOPIC_SAMPLE = 8
+
+
+def is_off_topic(
+    distances: Sequence[float],
+    threshold: float = OFF_TOPIC_DISTANCE,
+    sample: int = OFF_TOPIC_SAMPLE,
+) -> bool:
+    """검색 결과가 질문과 무관한지 판단한다.
+
+    상위 하나만 보면 우연히 가까운 문서 한 건에 휘둘린다.
+    ("오늘 점심 뭐 먹지?" 는 음식 문서가 가깝게 잡히지만 나머지는 모두 멀다)
+    그래서 상위 몇 개의 평균 거리로 본다.
+    """
+    if not distances:
+        return True
+    head = list(distances)[:sample]
+    return sum(head) / len(head) > threshold
+
 
 def drop_unmatched(
     doc_ids: Sequence[str], scores: Sequence[float], min_score: float = 1e-9

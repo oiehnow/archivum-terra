@@ -5,7 +5,42 @@
 점수 체계가 서로 다르므로 순위만 사용하는 RRF 로 합친다.
 """
 
-from wh40k.retrieve import drop_unmatched, merge_adjacent, reciprocal_rank_fusion
+from wh40k.retrieve import (
+    OFF_TOPIC_DISTANCE,
+    drop_unmatched,
+    is_off_topic,
+    merge_adjacent,
+    reciprocal_rank_fusion,
+)
+
+
+class TestIsOffTopic:
+    """벡터 검색은 아무 질문에나 가장 가까운 문서를 돌려준다.
+
+    "손흥민 골 기록" 에도 문서가 잡히므로, 그대로 두면 무관한 근거로 답을 지어낸다.
+    상위 하나만 보면 우연히 가까운 문서에 휘둘리므로 상위 여러 개의 평균으로 판단한다.
+    (실측: 40k 질문 top-8 평균 최대 1.014, 무관한 질문 최소 1.071)
+    """
+
+    def test_close_distances_are_on_topic(self):
+        assert is_off_topic([0.61, 0.72, 0.80, 0.83]) is False
+
+    def test_far_distances_are_off_topic(self):
+        assert is_off_topic([1.12, 1.15, 1.20, 1.26]) is True
+
+    def test_borderline_40k_question_stays_on_topic(self):
+        # "호루스 헤러시가 뭐야?" 실측값 근처
+        assert is_off_topic([1.00, 1.01, 1.01, 1.02]) is False
+
+    def test_single_near_hit_does_not_rescue_off_topic_query(self):
+        # "오늘 점심 뭐 먹지?" 는 음식 문서 하나가 가깝지만 나머지는 멀다
+        assert is_off_topic([0.97, 1.06, 1.08, 1.09, 1.10]) is True
+
+    def test_empty_distances_are_off_topic(self):
+        assert is_off_topic([]) is True
+
+    def test_threshold_sits_between_measured_ranges(self):
+        assert 1.0143 < OFF_TOPIC_DISTANCE < 1.0706
 
 
 class TestDropUnmatched:
